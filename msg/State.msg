@@ -1,2 +1,2 @@
-int8 num_blocks
+int64 block_in_gripper
 uint8[] block_i_over
