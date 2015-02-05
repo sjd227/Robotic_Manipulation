@@ -1,0 +1,4 @@
+String Action
+uint8 Target
+---
+bool isValid
