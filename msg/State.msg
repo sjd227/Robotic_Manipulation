@@ -1,2 +1,5 @@
+uint8 gripper_state
 int64 block_in_gripper
-uint8[] block_i_over
+int64 block_under_gripper
+int64 num_blocks
+int64[] block_under
