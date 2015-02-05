@@ -2,7 +2,6 @@
 
 	<param name="num_blocks" value="5"/>
 	<param name="configuration" value="stacked_ascending"/>
-
 	<node name="sim_master" pkg="sjd227_hw1" type="sim_master.py"/>
 
 </launch>
