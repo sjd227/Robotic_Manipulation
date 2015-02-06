@@ -48,12 +48,14 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
    FILES
    State.msg
+   Bi_State.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
   MoveRobot.srv
+  Bi_MoveRobot.srv
 )
 
 ## Generate actions in the 'action' folder
