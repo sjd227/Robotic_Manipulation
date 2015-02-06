@@ -1,4 +1,4 @@
 uint8 Action
-uint64 Target
+uint32 Target
 ---
 bool isValid
