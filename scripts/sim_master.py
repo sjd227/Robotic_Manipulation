@@ -117,11 +117,11 @@ def sim_master_server():
 
 	#initialize publishing    	
 	pub = rospy.Publisher('state', State, queue_size=10)
-    	rate = rospy.Rate(1) # 10hz
+    	rate = rospy.Rate(1) # 1hz
 
 	#publish state of the world    
 	while not rospy.is_shutdown():
-		rospy.loginfo(msg)
+		#rospy.loginfo(msg)
 		pub.publish(msg)
         	rate.sleep()
 

@@ -121,7 +121,7 @@ def sim_master_server():
 
 	#publish state of the world    
 	while not rospy.is_shutdown():
-		rospy.loginfo(msg)
+		#rospy.loginfo(msg)
 		pub.publish(msg)
         	rate.sleep()
 
