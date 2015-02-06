@@ -14,6 +14,17 @@ closeGripper 	= 1
 moveToBlock 	= 2
 moveOverBlock 	= 3
 
+def find_block_to_scatter():
+	# Scatter blocks. Find current block on top of stack by looping through all until find one	
+	block = 1		
+	while (block <= msg.num_blocks) and ((block in msg.block_under) or (msg.block_under[block-1] == 0)): 
+		block+=1
+	if (block > msg.num_blocks):
+		# All blocks checked; no more to move
+		return 0
+	else:
+		return block
+
 def set_config(config):
 	# Responsible for manipulation blocks into configurations, including scattering blocks, 
 	# putting blocks in ascending order after scattered, and putting blocks 
@@ -33,23 +44,9 @@ def set_config(config):
 		if (config == 'scatter'):
 
 			# Scatter blocks. Find current block on top of stack by looping through all until find one	
-			block = 1		
-			while (block <= msg.num_blocks) and ((block in msg.block_under) or (msg.block_under[block-1] == 0)): 
-				block+=1
+			block= find_block_to_scatter()
 
-			if (block > msg.num_blocks):
-				# All blocks checked; no more to move
-				complete=1
-
- 				# Do last check to make sure
-				block = 1
-				while (block <= msg.num_blocks and msg.block_under[block-1] == 0):
-					block = block+1
-				if (block <= msg.num_blocks):
-					# One block isn't over table (block 0). Must have been an uncaught manipulation error
-					isValid = 0
-			
-			else:
+			if (block > 0):
 				# Block found on top of stack, so move it
 				rospy.loginfo("Moving block %d",block)
 				try:
@@ -79,12 +76,24 @@ def set_config(config):
 						return 0
 					# Sleep before next iteration					
 					rate.sleep()
-				
 
 				except rospy.ServiceException, e:
 					# Error with service. End manipulation process
         				rospy.loginfo("Service call failed: %s"%e)
 					isValid = 0
+			else:		
+				# All blocks checked; no more to move
+				complete=1
+
+ 				# Do last check to make sure
+				block = 1
+				while (block <= msg.num_blocks and msg.block_under[block-1] == 0):
+					block = block+1
+				if (block <= msg.num_blocks):
+					# One block isn't over table (block 0). Must have been an uncaught manipulation error
+					isValid = 0
+			
+			
 
 		elif (config == "scattered_to_ascending"):
 			# Move blocks to ascending order, assuming blocks were previously scattered
@@ -114,29 +123,29 @@ def set_config(config):
 				isValid = move_robot(openGripper,0)
 				if (not isValid):
 					return 0
-
-				# Sleep before next iteration or completion check					
-				rate.sleep()
-
-				if (block == msg.num_blocks):
-					# All blocks manipulated
-					complete = 1
-	
-					# Check if manipulation was successful by comparing it to expected arangement
-					expected = ()
-					for i in range(0,msg.num_blocks):
-						expected+=(i,)
-					isValid = expected == msg.block_under
-					if (not isValid):
-						rospy.loginfo("Manipulation complete, but not in ascending order!") 
-				else:
-					# Manipulate next block
-					block+=1
-
 			except rospy.ServiceException, e:
 				# Error with service. End manipulation process
         			rospy.loginfo("Service call failed: %s"%e)
 				isValid = 0
+
+			# Sleep before next iteration or completion check					
+			rate.sleep()
+				
+			if (block == msg.num_blocks):
+				# All blocks manipulated
+				complete = 1
+
+				# Check if manipulation was successful by comparing it to expected arangement
+				expected = ()
+				for i in range(0,msg.num_blocks):
+					expected+=(i,)					
+				isValid = expected == msg.block_under
+				if (not isValid):
+					rospy.loginfo("Manipulation complete, but not in ascending order!") 
+			else:
+				# Manipulate next block
+				block+=1
+
 
 		elif (config == "scattered_to_descending"):
 			# Move blocks to descending order, assuming blocks were previously scattered
@@ -173,28 +182,33 @@ def set_config(config):
 				if (not isValid):
 					return 0
 
-				# Sleep before next iteration or completion check					
-				rate.sleep()
-				if (block == msg.num_blocks):
-					# Did all blocks!
-					complete = 1
-
-					# Check if manipulation was successful by comparing it to expected arangement
-					expected = ()
-					for i in range(2,msg.num_blocks+1):
-						expected+=(i,)
-					expected+=(0,)
-					isValid = expected == msg.block_under
-					if (not isValid):
-						rospy.loginfo("Manipulation complete, but not in ascending order!") 
-				else:
-					# Manipulate next block
-					block+=1
-
 			except rospy.ServiceException, e:
 				# Error with service. End manipulation process        			
 				rospy.loginfo("Service call failed: %s"%e)
 				isValid = 0
+
+			# Sleep before next iteration or completion check					
+			rate.sleep()	
+
+			if (block == msg.num_blocks):
+				# Did all blocks!
+				complete = 1
+
+				# Check if manipulation was successful by comparing it to expected arangement
+				expected = ()
+				for i in range(2,msg.num_blocks+1):
+					expected+=(i,)
+				expected+=(0,)				
+				isValid = expected == msg.block_under
+				if (not isValid):
+					rospy.loginfo("Manipulation complete, but not in ascending order!") 
+			else:
+				# Manipulate next block
+				block+=1
+
+		else:
+			#Unknown config
+			isValid = 0
 
 	return isValid
 
@@ -226,6 +240,10 @@ def callback_command(data):
 		# Scatter blocks, then put in descending order
 		isvalid = set_config('scatter')
 		isvalid = isvalid and set_config('scattered_to_descending')	
+	elif (command == 'odd_even'):
+		# Organize blocks into odd and even stacks
+		isvalid = set_config('scatter')
+		isvalid = isvalid and set_config('scattered_to_odd_even')
 	else:
 		# Unknown command
 		isvalid = 0;
