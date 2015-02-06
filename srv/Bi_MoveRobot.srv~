@@ -1,0 +1,5 @@
+uint8 Action
+uint32 Target
+uint8 Robot
+---
+bool isValid

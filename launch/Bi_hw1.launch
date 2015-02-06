@@ -1,0 +1,8 @@
+<launch>
+
+	<param name="num_blocks" value="5"/>
+	<param name="configuration" value="stacked_ascending"/>
+	<node name="Bi_sim_master" pkg="sjd227_hw1" type="Bi_sim_master.py"/>
+	<node name="Bi_controller" pkg="sjd227_hw1" type="Bi_controller.py"/>
+</launch>
+
