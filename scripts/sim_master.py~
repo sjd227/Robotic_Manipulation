@@ -28,14 +28,7 @@ def handle_move_robot(req):
 		#open gripper
 		if (msg.gripper_state == 1):
 			#gripper is closed, so open it
-			msg.gripper_state = 0
-			if (msg.block_in_gripper > 0):
-				#there was a block in the gripper, so note where it landed
-				i = msg.block_in_gripper
-				msg.block_under[i-1] = msg.block_under_gripper
-
-				#set no block in gripper
-				msg.block_in_gripper = 0
+			msg.gripper_state= 0
 				
 	elif (req.Action == 1):
 		#close gripper
@@ -58,26 +51,37 @@ def handle_move_robot(req):
 				#gripper is closed, so can't move to block
 				isValid = 0
 		elif (req.Action == 3):
-			#move over block
-			if (req.Target ==0 or req.Target not in msg.block_under):
-				#no blocks over target, so move over it
+			# Move over block not already in the gripper if its the table, if gripper is open and 
+			# no block 2 above it, or gripper is closed and there's no block 1 above it
+			if (req.Target != msg.block_in_gripper) and ( (req.Target ==0) or (msg.gripper_state == 0 and ((req.Target+1) not in msg.block_under)) or (msg.gripper_state == 1 and (req.Target not in msg.block_under))):
+				#no blocks 2 over target, so move over it
 				msg.block_under_gripper = req.Target
 				if (msg.gripper_state == 0):
 					#gripper was open, so block previously in gripper region
-					#didn't travel along with the gripper
-					msg.block_in_gripper = 0
+					#didn't travel along with the gripper. Check if there's a new block
+					if (req.Target is not 0 and req.Target in msg.block_under):
+						i = msg.block_under.index(req.Target) + 1
+						msg.block_in_gripper = i
+					else:
+						msg.block_in_gripper = 0
+				else:
+				# gripper closed, so check if there's a block in the 
+				# gripper and, if so, note where it landed
+					i = msg.block_in_gripper
+					if (i > 0):
+						msg.block_under[i-1] = msg.block_under_gripper
 			else:
-				#some block is already over target, so this action is invalid
+				#some block is already 2 over target, so this action is invalid
 				isValid = 0
 		else:
 			#unknown action	
 			isValid = 0
 	else:
 		#unknown target
-		isvalid = 0
+		isValid = 0
 	
 	#Send out response
-	return MoveRobotResponse(isvalid)
+	return MoveRobotResponse(isValid)
 	   
 def sim_master_server():
 	# Master server for this simple simulation. Handles service "move_robot" for 
